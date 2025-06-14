@@ -6,11 +6,8 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const PORT = process.env.PORT || 4321;
 
-// ✅ Lista de orígenes permitidos (Railway + Localhost)
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://cloudbay.vercel.app'
-];
+// ✅ Manejamos múltiples orígenes permitidos
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',');
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -26,12 +23,10 @@ app.use(cors({
 
 app.use(express.json());
 
-// Ruta de prueba
 app.get('/', (req, res) => {
   res.send('✅ Backend funcionando desde Railway!');
 });
 
-// Ruta de creación de checkout
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const { line_items } = req.body;
@@ -52,5 +47,6 @@ app.post('/create-checkout-session', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
