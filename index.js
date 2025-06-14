@@ -1,56 +1,33 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 4321;
 
-// ✅ Lista de orígenes permitidos (Railway + Localhost)
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://cloudbay.vercel.app'
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS Not Allowed'));
-    }
-  },
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type']
-}));
-
+app.use(cors());
 app.use(express.json());
 
 // Ruta de prueba
 app.get('/', (req, res) => {
-  res.send('✅ Backend funcionando desde Railway!');
+  res.send('Backend de CloudBay funcionando ✅');
 });
 
-// Ruta de creación de checkout
-app.post('/create-checkout-session', async (req, res) => {
+// Ruta para crear un pago con Stripe
+app.post('/create-payment-intent', async (req, res) => {
   try {
-    const { line_items } = req.body;
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      line_items,
-      success_url: `${process.env.FRONTEND_URL}/success`,
-      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+    const { amount } = req.body;
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100, // Stripe trabaja en centavos
+      currency: 'usd',
     });
-
-    res.status(200).json({ url: session.url });
+    res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    console.error('Error creando la sesión:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
